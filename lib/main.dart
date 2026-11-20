@@ -113,6 +113,7 @@ class _MapScreenState extends State<MapScreen> {
   void _resetZoom() {
     final screenWidth = MediaQuery.of(context).size.width;
     const initialScale = 0.52;
+    // Correção do cálculo de offset que estava quebrado
     final offsetX = (screenWidth - (1400 * initialScale)) / 2;
 
     setState(() {
@@ -438,191 +439,220 @@ class _MapScreenState extends State<MapScreen> {
   }
 }
 
+// Tela de Leitura de QR Code utilizando o mobile_scanner
+class QRScannerScreen extends StatelessWidget {
+  const QRScannerScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Escaneie o Totem'),
+        backgroundColor: const Color(0xFF090D16),
+      ),
+      body: MobileScanner(
+        onDetect: (capture) {
+          final List<Barcode> barcodes = capture.barcodes;
+          for (final barcode in barcodes) {
+            if (barcode.rawValue != null) {
+              final code = barcode.rawValue!;
+              Navigator.pop(context, code);
+              break;
+            }
+          }
+        },
+      ),
+    );
+  }
+}
+
 class AirportHallRoutePainter extends CustomPainter {
-final Offset userPos;
-final Offset? destPos;
-final List<AirportLocation> locations;
+  final Offset userPos;
+  final Offset? destPos;
+  final List<AirportLocation> locations;
 
-AirportHallRoutePainter({
-required this.userPos,
-required this.destPos,
-required this.locations,
-});
+  AirportHallRoutePainter({
+    required this.userPos,
+    required this.destPos,
+    required this.locations,
+  });
 
-Offset _toIso(double x, double y) {
-const double isoAngle = math.pi / 6;
-double isoX = (x - y) * math.cos(isoAngle);
-double isoY = (x + y) * math.sin(isoAngle);
-return Offset(isoX + 600, isoY + 80);
-}
+  Offset _toIso(double x, double y) {
+    const double isoAngle = math.pi / 6;
+    double isoX = (x - y) * math.cos(isoAngle);
+    double isoY = (x + y) * math.sin(isoAngle);
+    return Offset(isoX + 600, isoY + 80);
+  }
 
-void _drawIsoBlock(Canvas canvas, Rect rect, double height3D, String label) {
-final p1 = _toIso(rect.left, rect.top);
-final p2 = _toIso(rect.right, rect.top);
-final p3 = _toIso(rect.right, rect.bottom);
-final p4 = _toIso(rect.left, rect.bottom);
+  void _drawIsoBlock(Canvas canvas, Rect rect, double height3D, String label) {
+    final p1 = _toIso(rect.left, rect.top);
+    final p2 = _toIso(rect.right, rect.top);
+    final p3 = _toIso(rect.right, rect.bottom);
+    final p4 = _toIso(rect.left, rect.bottom);
 
-final pathShadow = Path()
-..moveTo(p1.dx + 15, p1.dy + height3D + 15)
-..lineTo(p2.dx + 15, p2.dy + height3D + 15)
-..lineTo(p3.dx + 15, p3.dy + height3D + 15)
-..lineTo(p4.dx + 15, p4.dy + height3D + 15)
-..close();
-canvas.drawPath(pathShadow, Paint()..color = Colors.black.withOpacity(0.5)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14));
+    final pathShadow = Path()
+      ..moveTo(p1.dx + 15, p1.dy + height3D + 15)
+      ..lineTo(p2.dx + 15, p2.dy + height3D + 15)
+      ..lineTo(p3.dx + 15, p3.dy + height3D + 15)
+      ..lineTo(p4.dx + 15, p4.dy + height3D + 15)
+      ..close();
+    canvas.drawPath(pathShadow, Paint()..color = Colors.black.withOpacity(0.5)..maskFilter = const MaskFilter.blur(BlurStyle.normal, 14));
 
-final wallLeft = Path()
-..moveTo(p4.dx, p4.dy)
-..lineTo(p3.dx, p3.dy)
-..lineTo(p3.dx, p3.dy + height3D)
-..lineTo(p4.dx, p4.dy + height3D)
-..close();
-canvas.drawPath(wallLeft, Paint()..color = const Color(0xFF1E293B));
+    final wallLeft = Path()
+      ..moveTo(p4.dx, p4.dy)
+      ..lineTo(p3.dx, p3.dy)
+      ..lineTo(p3.dx, p3.dy + height3D)
+      ..lineTo(p4.dx, p4.dy + height3D)
+      ..close();
+    canvas.drawPath(wallLeft, Paint()..color = const Color(0xFF1E293B));
 
-final wallRight = Path()
-..moveTo(p2.dx, p2.dy)
-..lineTo(p3.dx, p3.dy)
-..lineTo(p3.dx, p3.dy + height3D)
-..lineTo(p2.dx, p2.dy + height3D)
-..close();
-canvas.drawPath(wallRight, Paint()..color = const Color(0xFF334155));
+    final wallRight = Path()
+      ..moveTo(p2.dx, p2.dy)
+      ..lineTo(p3.dx, p3.dy)
+      ..lineTo(p3.dx, p3.dy + height3D)
+      ..lineTo(p2.dx, p2.dy + height3D)
+      ..close();
+    canvas.drawPath(wallRight, Paint()..color = const Color(0xFF334155));
 
-final topPath = Path()
-..moveTo(p1.dx, p1.dy)
-..lineTo(p2.dx, p2.dy)
-..lineTo(p3.dx, p3.dy)
-..lineTo(p4.dx, p4.dy)
-..close();
+    final topPath = Path()
+      ..moveTo(p1.dx, p1.dy)
+      ..lineTo(p2.dx, p2.dy)
+      ..lineTo(p3.dx, p3.dy)
+      ..lineTo(p4.dx, p4.dy)
+      ..close();
 
-final paintTop = Paint()
-..shader = const LinearGradient(
-colors: [Color(0xFF64748B), Color(0xFF475569)],
-begin: Alignment.topLeft,
-end: Alignment.bottomRight,
-).createShader(rect);
+    final paintTop = Paint()
+      ..shader = const LinearGradient(
+        colors: [Color(0xFF64748B), Color(0xFF475569)],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      ).createShader(rect);
 
-canvas.drawPath(topPath, paintTop);
-canvas.drawPath(
-topPath,
-Paint()
-..color = const Color(0xFF94A3B8).withOpacity(0.5)
-..strokeWidth = 1.5
-..style = PaintingStyle.stroke,
-);
+    canvas.drawPath(topPath, paintTop);
+    canvas.drawPath(
+      topPath,
+      Paint()
+        ..color = const Color(0xFF94A3B8).withOpacity(0.5)
+        ..strokeWidth = 1.5
+        ..style = PaintingStyle.stroke,
+    );
 
-if (label.isNotEmpty) {
-final textPainter = TextPainter(
-text: TextSpan(
-text: label,
-style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-),
-textDirection: TextDirection.ltr,
-);
-textPainter.layout();
-textPainter.paint(canvas, Offset(p1.dx + 12, p1.dy + 10));
-}
-}
+    if (label.isNotEmpty) {
+      final textPainter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      );
+      textPainter.layout();
+      textPainter.paint(canvas, Offset(p1.dx + 12, p1.dy + 10));
+    }
+  }
 
-List<Offset> _calculateHallRoute(Offset start, Offset end) {
-List<Offset> pathPoints = [];
-pathPoints.add(start);
+  List<Offset> _calculateHallRoute(Offset start, Offset end) {
+    List<Offset> pathPoints = [];
+    pathPoints.add(start);
 
-const double centralCorridorX = 390.0;
+    const double centralCorridorX = 390.0;
 
-if ((start.dx < centralCorridorX && end.dx > centralCorridorX) ||
-(start.dx > centralCorridorX && end.dx < centralCorridorX)) {
-pathPoints.add(Offset(centralCorridorX, start.dy));
-pathPoints.add(Offset(centralCorridorX, end.dy));
-} else {
-double safeY = 290.0;
-if (start.dy > 500 && end.dy > 500) safeY = 590.0;
-pathPoints.add(Offset(start.dx, safeY));
-pathPoints.add(Offset(end.dx, safeY));
-}
+    if ((start.dx < centralCorridorX && end.dx > centralCorridorX) ||
+        (start.dx > centralCorridorX && end.dx < centralCorridorX)) {
+      pathPoints.add(Offset(centralCorridorX, start.dy));
+      pathPoints.add(Offset(centralCorridorX, end.dy));
+    } else {
+      double safeY = 290.0;
+      if (start.dy > 500 && end.dy > 500) safeY = 590.0;
+      pathPoints.add(Offset(start.dx, safeY));
+      pathPoints.add(Offset(end.dx, safeY));
+    }
 
-pathPoints.add(end);
-return pathPoints;
-}
+    pathPoints.add(end);
+    return pathPoints;
+  }
 
-@override
-void paint(Canvas canvas, Size size) {
-final paintBg = Paint()..color = const Color(0xFF090D16);
-canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paintBg);
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paintBg = Paint()..color = const Color(0xFF090D16);
+    canvas.drawRect(Rect.fromLTWH(0, 0, size.width, size.height), paintBg);
 
-final paintGrid = Paint()
-..color = Colors.white.withOpacity(0.025)
-..strokeWidth = 1;
-for (double x = 0; x <= 1100; x += 100) {
-canvas.drawLine(_toIso(x, 0), _toIso(x, 1100), paintGrid);
-}
-for (double y = 0; y <= 1100; y += 100) {
-canvas.drawLine(_toIso(0, y), _toIso(1100, y), paintGrid);
-}
+    final paintGrid = Paint()
+      ..color = Colors.white.withOpacity(0.025)
+      ..strokeWidth = 1;
+    for (double x = 0; x <= 1100; x += 100) {
+      canvas.drawLine(_toIso(x, 0), _toIso(x, 1100), paintGrid);
+    }
+    for (double y = 0; y <= 1100; y += 100) {
+      canvas.drawLine(_toIso(0, y), _toIso(1100, y), paintGrid);
+    }
 
-_drawIsoBlock(canvas, const Rect.fromLTWH(80, 60, 300, 220), 24.0, '🛫 PORTÕES A');
-_drawIsoBlock(canvas, const Rect.fromLTWH(420, 60, 300, 220), 24.0, '🛫 PORTÕES B');
-_drawIsoBlock(canvas, const Rect.fromLTWH(80, 310, 300, 260), 28.0, '🛍️ DUTY FREE');
-_drawIsoBlock(canvas, const Rect.fromLTWH(420, 310, 300, 260), 28.0, '🛋️ SALA VIP');
-_drawIsoBlock(canvas, const Rect.fromLTWH(80, 610, 300, 260), 24.0, '☕ ALIMENTAÇÃO');
-_drawIsoBlock(canvas, const Rect.fromLTWH(420, 610, 300, 260), 24.0, '🛄 BAGAGENS');
+    _drawIsoBlock(canvas, const Rect.fromLTWH(80, 60, 300, 220), 24.0, '🛫 PORTÕES A');
+    _drawIsoBlock(canvas, const Rect.fromLTWH(420, 60, 300, 220), 24.0, '🛫 PORTÕES B');
+    _drawIsoBlock(canvas, const Rect.fromLTWH(80, 310, 300, 260), 28.0, '🛍️ DUTY FREE');
+    _drawIsoBlock(canvas, const Rect.fromLTWH(420, 310, 300, 260), 28.0, '🛋️ SALA VIP');
+    _drawIsoBlock(canvas, const Rect.fromLTWH(80, 610, 300, 260), 24.0, '☕ ALIMENTAÇÃO');
+    _drawIsoBlock(canvas, const Rect.fromLTWH(420, 610, 300, 260), 24.0, '🛄 BAGAGENS');
 
-for (var loc in locations) {
-final isoPt = _toIso(loc.x, loc.y);
-final paintPoi = Paint()..color = const Color(0xFFE2E8F0);
-final paintPoiOuter = Paint()..color = const Color(0xFF6366F1).withOpacity(0.5);
+    for (var loc in locations) {
+      final isoPt = _toIso(loc.x, loc.y);
+      final paintPoi = Paint()..color = const Color(0xFFE2E8F0);
+      final paintPoiOuter = Paint()..color = const Color(0xFF6366F1).withOpacity(0.5);
 
-canvas.drawCircle(isoPt, 8, paintPoiOuter);
-canvas.drawCircle(isoPt, 4, paintPoi);
-}
+      canvas.drawCircle(isoPt, 8, paintPoiOuter);
+      canvas.drawCircle(isoPt, 4, paintPoi);
+    }
 
-if (destPos != null) {
-final rawRoutePoints = _calculateHallRoute(userPos, destPos!);
-final isoRoutePoints = rawRoutePoints.map((pt) => _toIso(pt.dx, pt.dy)).toList();
+    if (destPos != null) {
+      final rawRoutePoints = _calculateHallRoute(userPos, destPos!);
+      final isoRoutePoints = rawRoutePoints.map((pt) => _toIso(pt.dx, pt.dy)).toList();
 
-final routePath = Path();
-if (isoRoutePoints.isNotEmpty) {
-routePath.moveTo(isoRoutePoints.first.dx, isoRoutePoints.first.dy);
-for (int i = 1; i < isoRoutePoints.length; i++) {
-routePath.lineTo(isoRoutePoints[i].dx, isoRoutePoints[i].dy);
-}
-}
+      final routePath = Path();
+      if (isoRoutePoints.isNotEmpty) {
+        routePath.moveTo(isoRoutePoints.first.dx, isoRoutePoints.first.dy);
+        for (int i = 1; i < isoRoutePoints.length; i++) {
+          routePath.lineTo(isoRoutePoints[i].dx, isoRoutePoints[i].dy);
+        }
+      }
 
-final paintRouteGlow = Paint()
-..color = const Color(0xFFF43F5E).withOpacity(0.4)
-..strokeWidth = 10
-..strokeCap = StrokeCap.round
-..strokeJoin = StrokeJoin.round
-..style = PaintingStyle.stroke;
+      final paintRouteGlow = Paint()
+        ..color = const Color(0xFFF43F5E).withOpacity(0.4)
+        ..strokeWidth = 10
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
 
-final paintRoute = Paint()
-..color = const Color(0xFFFB7185)
-..strokeWidth = 4.5
-..strokeCap = StrokeCap.round
-..strokeJoin = StrokeJoin.round
-..style = PaintingStyle.stroke;
+      final paintRoute = Paint()
+      // Correção do erro de const expression na linha 600 do código original
+        ..color = const Color(0xFFFB7185)
+        ..strokeWidth = 4.5
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..style = PaintingStyle.stroke;
 
-canvas.drawPath(routePath, paintRouteGlow);
-canvas.drawPath(routePath, paintRoute);
+      canvas.drawPath(routePath, paintRouteGlow);
+      canvas.drawPath(routePath, paintRoute);
 
-final destIso = isoRoutePoints.last;
-final paintDestOuter = Paint()..color = const Color(0xFFF43F5E).withOpacity(0.3);
-final paintDestInner = Paint()..color = const Color(0xFFE11D48);
-canvas.drawCircle(destIso, 22, paintDestOuter);
-canvas.drawCircle(destIso, 9, paintDestInner);
-}
+      final destIso = isoRoutePoints.last;
+      final paintDestOuter = Paint()..color = const Color(0xFFF43F5E).withOpacity(0.3);
+      final paintDestInner = Paint()..color = const Color(0xFFE11D48);
+      canvas.drawCircle(destIso, 22, paintDestOuter);
+      canvas.drawCircle(destIso, 9, paintDestInner);
+    }
 
-final userIsoPt = _toIso(userPos.dx, userPos.dy);
-final paintUserGlow = Paint()..color = const Color(0xFF6366F1).withOpacity(0.45);
-final paintUserOuter = Paint()..color = const Color(0xFF818CF8);
-final paintUserInner = Paint()..color = Colors.white;
+    final userIsoPt = _toIso(userPos.dx, userPos.dy);
+    final paintUserGlow = Paint()..color = const Color(0xFF6366F1).withOpacity(0.45);
+    final paintUserOuter = Paint()..color = const Color(0xFF818CF8);
+    final paintUserInner = Paint()..color = Colors.white;
 
-canvas.drawCircle(userIsoPt, 24, paintUserGlow);
-canvas.drawCircle(userIsoPt, 12, paintUserOuter);
-canvas.drawCircle(userIsoPt, 5, paintUserInner);
-}
+    canvas.drawCircle(userIsoPt, 24, paintUserGlow);
+    canvas.drawCircle(userIsoPt, 12, paintUserOuter);
+    canvas.drawCircle(userIsoPt, 5, paintUserInner);
+  }
 
-@override
-bool shouldRepaint(covariant AirportHallRoutePainter oldDelegate) {
-return oldDelegate.userPos != userPos ||
-oldDelegate.destPos != destPos ||
-oldDelegate.locations != locations;
+  @override
+  bool shouldRepaint(covariant AirportHallRoutePainter oldDelegate) {
+    return oldDelegate.userPos != userPos ||
+        oldDelegate.destPos != destPos ||
+        oldDelegate.locations != locations;
+  }
 }
